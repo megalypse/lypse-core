@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::types::{request::Request, request_type::RequestType};
 
 use super::parser::RequestParser;
@@ -43,17 +45,37 @@ impl DefaultParser {
 
         panic!("Failed to determine HTTP version")
     }
+
+    fn get_headers(&self, lines: Vec<&str>) -> HashMap<String, String> {
+        lines
+            .into_iter()
+            .filter(|x| self.is_header(x))
+            .map(|x| x.split_once(":"))
+            .filter(|result| result.is_some())
+            .map(|result| {
+                let (key, value) = result.unwrap();
+
+                (String::from(key.trim()), String::from(value.trim()))
+            })
+            .collect::<HashMap<String, String>>()
+    }
+
+    fn is_header(&self, target: &str) -> bool {
+        target.contains(":")
+    }
 }
 
 impl RequestParser for DefaultParser {
     fn parse(&self, raw_request: &str) -> Request {
-        let lines = raw_request.split("\n").collect::<Vec<&str>>();
+        let mut lines = raw_request.split("\r\n").collect::<Vec<&str>>();
         let first_line = lines[0];
+        let _content = lines.pop();
 
         Request::new(
             self.get_http_version(first_line),
             self.get_request_type(first_line),
             &self.get_uri(first_line),
+            self.get_headers(lines),
         )
     }
 }
