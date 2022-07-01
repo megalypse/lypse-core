@@ -32,14 +32,14 @@ fn generate_query_entry(param: Param) -> QueryEntry {
     let param_type = get_param_type(&key);
 
     match param_type {
-        QueryParamType::Common => QueryEntry::SingleEntry((key, value)),
+        QueryParamType::Common => QueryEntry::SingularEntry((key, value)),
         QueryParamType::Nested => {
             let mut keys = get_nested_param_keys(&key);
             let last_key = keys.pop().unwrap();
 
             return wrap_nested_values(
                 &mut keys,
-                QueryEntry::SingleEntry((String::from(last_key), value)),
+                QueryEntry::SingularEntry((String::from(last_key), value)),
             );
         }
     }
@@ -101,8 +101,8 @@ mod tests {
         assert_eq!(
             params_list,
             vec![
-                QueryEntry::SingleEntry((String::from("name"), String::from("John"))),
-                QueryEntry::SingleEntry((String::from("surname"), String::from("Doe")))
+                QueryEntry::SingularEntry((String::from("name"), String::from("John"))),
+                QueryEntry::SingularEntry((String::from("surname"), String::from("Doe")))
             ]
         );
     }
@@ -141,7 +141,7 @@ mod tests {
             "key1".to_string(),
             Box::new(QueryEntry::NestedEntry((
                 "key2".to_string(),
-                Box::new(QueryEntry::SingleEntry((
+                Box::new(QueryEntry::SingularEntry((
                     "key3".to_string(),
                     value.to_string(),
                 ))),
