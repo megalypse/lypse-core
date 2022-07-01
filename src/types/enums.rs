@@ -49,6 +49,7 @@ impl ParamEntry {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use crate::types::enums::ParamEntry;
 
     #[test]
