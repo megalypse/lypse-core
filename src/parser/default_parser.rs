@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::types::{request::Request, request_type::RequestType};
 
-use super::parser::RequestParser;
+use super::{parser::RequestParser, query_parser::parse_query};
 
 const REQUEST_TYPES: [RequestType; 4] = [
     RequestType::GET,
@@ -71,11 +71,14 @@ impl RequestParser for DefaultParser {
         let first_line = lines[0];
         let _content = lines.pop();
 
+        let uri = &self.get_uri(first_line);
+
         Request::new(
             self.get_http_version(first_line),
             self.get_request_type(first_line),
-            &self.get_uri(first_line),
+            uri,
             self.get_headers(lines),
+            parse_query(uri),
         )
     }
 }
