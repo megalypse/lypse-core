@@ -8,21 +8,21 @@ pub enum QueryParamType {
 
 #[derive(Debug, PartialEq)]
 
-pub enum QueryEntry {
+pub enum ParamEntry {
     SingularEntry((String, String)),
-    NestedEntry((String, Box<QueryEntry>)),
+    NestedEntry((String, Box<ParamEntry>)),
 }
 
-impl QueryEntry {
+impl ParamEntry {
     pub fn get_value(&self) -> &String {
         match self {
-            QueryEntry::SingularEntry((_, value)) => value,
-            QueryEntry::NestedEntry((_, value)) => QueryEntry::get_value(value),
+            ParamEntry::SingularEntry((_, value)) => value,
+            ParamEntry::NestedEntry((_, value)) => ParamEntry::get_value(value),
         }
     }
 
     pub fn get_value_as_vector(&self) -> Vec<String> {
-        let final_value = QueryEntry::get_value(self);
+        let final_value = ParamEntry::get_value(self);
 
         if self.is_list_value(final_value) {
             return self.parse_list_value(final_value);
@@ -49,15 +49,15 @@ impl QueryEntry {
 }
 
 mod tests {
-    use crate::types::enums::QueryEntry;
+    use crate::types::enums::ParamEntry;
 
     #[test]
     fn should_get_final_value() {
-        let nested_values = QueryEntry::NestedEntry((
+        let nested_values = ParamEntry::NestedEntry((
             String::from("key1"),
-            Box::new(QueryEntry::NestedEntry((
+            Box::new(ParamEntry::NestedEntry((
                 "key2".to_string(),
-                Box::new(QueryEntry::SingularEntry((
+                Box::new(ParamEntry::SingularEntry((
                     "key3".to_string(),
                     "final value".to_string(),
                 ))),
@@ -83,7 +83,7 @@ mod tests {
         let list_value4 = "[value1]";
         let list_value5 = "[\"value1\"]";
 
-        let caller_value = QueryEntry::SingularEntry(("".to_string(), "".to_string()));
+        let caller_value = ParamEntry::SingularEntry(("".to_string(), "".to_string()));
 
         assert_eq!(false, caller_value.is_list_value(string_value));
         assert_eq!(false, caller_value.is_list_value(string_value2));
@@ -107,7 +107,7 @@ mod tests {
             String::from("value3"),
         ];
 
-        let caller_value = QueryEntry::SingularEntry(("".to_string(), "".to_string()));
+        let caller_value = ParamEntry::SingularEntry(("".to_string(), "".to_string()));
 
         assert_eq!(expected_result, caller_value.parse_list_value(list_value));
         assert_eq!(expected_result, caller_value.parse_list_value(list_value2));

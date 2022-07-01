@@ -1,8 +1,8 @@
-use crate::types::enums::{QueryEntry, QueryParamType};
+use crate::types::enums::{ParamEntry, QueryParamType};
 
 type Param = (String, String);
 
-pub fn parse_query(raw_uri: &str) -> Vec<QueryEntry> {
+pub fn parse_query(raw_uri: &str) -> Vec<ParamEntry> {
     let raw_query = get_raw_params(raw_uri);
 
     get_params_list(&raw_query)
@@ -15,7 +15,7 @@ fn get_raw_params(raw_uri: &str) -> String {
     }
 }
 
-fn get_params_list(raw_query: &str) -> Vec<QueryEntry> {
+fn get_params_list(raw_query: &str) -> Vec<ParamEntry> {
     raw_query
         .split("&")
         .map(|x| {
@@ -23,35 +23,35 @@ fn get_params_list(raw_query: &str) -> Vec<QueryEntry> {
 
             generate_query_entry((String::from(key_value[0]), String::from(key_value[1])))
         })
-        .collect::<Vec<QueryEntry>>()
+        .collect::<Vec<ParamEntry>>()
 }
 
-fn generate_query_entry(param: Param) -> QueryEntry {
+fn generate_query_entry(param: Param) -> ParamEntry {
     let (key, value) = param;
 
     let param_type = get_param_type(&key);
 
     match param_type {
-        QueryParamType::Common => QueryEntry::SingularEntry((key, value)),
+        QueryParamType::Common => ParamEntry::SingularEntry((key, value)),
         QueryParamType::Nested => {
             let mut keys = get_nested_param_keys(&key);
             let last_key = keys.pop().unwrap();
 
             return wrap_nested_values(
                 &mut keys,
-                QueryEntry::SingularEntry((String::from(last_key), value)),
+                ParamEntry::SingularEntry((String::from(last_key), value)),
             );
         }
     }
 }
 
-fn wrap_nested_values(remaining_keys: &mut Vec<String>, evolving_entry: QueryEntry) -> QueryEntry {
+fn wrap_nested_values(remaining_keys: &mut Vec<String>, evolving_entry: ParamEntry) -> ParamEntry {
     if !remaining_keys.is_empty() {
         let current_key = remaining_keys.pop();
 
         return wrap_nested_values(
             remaining_keys,
-            QueryEntry::NestedEntry((current_key.unwrap(), Box::new(evolving_entry))),
+            ParamEntry::NestedEntry((current_key.unwrap(), Box::new(evolving_entry))),
         );
     }
 
@@ -79,7 +79,7 @@ fn get_nested_param_keys(raw_key: &str) -> Vec<String> {
 mod tests {
     use crate::{
         parser::query_parser::get_params_list,
-        types::enums::{QueryEntry, QueryParamType},
+        types::enums::{ParamEntry, QueryParamType},
     };
 
     use super::{generate_query_entry, get_nested_param_keys, get_param_type, get_raw_params};
@@ -101,8 +101,8 @@ mod tests {
         assert_eq!(
             params_list,
             vec![
-                QueryEntry::SingularEntry((String::from("name"), String::from("John"))),
-                QueryEntry::SingularEntry((String::from("surname"), String::from("Doe")))
+                ParamEntry::SingularEntry((String::from("name"), String::from("John"))),
+                ParamEntry::SingularEntry((String::from("surname"), String::from("Doe")))
             ]
         );
     }
@@ -137,11 +137,11 @@ mod tests {
         let value = "value";
 
         let result = generate_query_entry((key.to_string(), value.to_string()));
-        let expected = QueryEntry::NestedEntry((
+        let expected = ParamEntry::NestedEntry((
             "key1".to_string(),
-            Box::new(QueryEntry::NestedEntry((
+            Box::new(ParamEntry::NestedEntry((
                 "key2".to_string(),
-                Box::new(QueryEntry::SingularEntry((
+                Box::new(ParamEntry::SingularEntry((
                     "key3".to_string(),
                     value.to_string(),
                 ))),
